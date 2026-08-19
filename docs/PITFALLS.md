@@ -35,6 +35,23 @@ Content-Length，直接测速会被误导。
 → 用 API 端点 `https://modelscope.cn/api/v1/models/<repo>/repo?Revision=master&FilePath=<file>`
 （每次重定向拿新 auth_key，分块下载不受 token 过期影响）。
 
+### 27. [2026-08-19] 无卡模式 2GB 内存墙：CPU 全量验证不可行
+用 CPU-only llama-server（b10502 预编译）加载 19GB Q4_K_M 做端到端验证，
+`memory.events` max 命中 67 万次，进程最终被 SIGKILL（code 137）。
+→ 2GB cgroup 下 19GB 模型的 mmap 页缓存被反复回收，加载永远无法完成；
+  无卡模式只做「准备类」工作（下载/编译/模板/配置），模型加载与推理验证
+  必须在带卡模式做。
+
+### 28. [2026-08-19] -j4 编译 fattn 实例被 SIGKILL（137），-j3 安全
+RTX 5090 无卡模式 -j4 时 `fattn-mma-f16-instance-*.cu.o` 编译进程被内核
+SIGKILL（每个 cicc/ptxas 峰值内存高，3 个并发已贴近 2GB 上限）。
+→ 编译并行度用 -j3 封顶；GPU 模式 cgroup 内存充足后可提 -j8。
+
+### 29. [2026-08-19] 4 点自动关机前编译未完成 → 数据盘续跑
+AutoDL 实例凌晨 4 点关机，但数据盘 `/root/autodl-tmp` 保留，llama.cpp
+build 对象不丢。重启后 `cmake --build build -j3 --target llama-server`
+增量续跑即可（GPU 模式可 -j8）。已封装 `scripts/resume_build_and_start.sh`。
+
 ## 旧项目经验（沿用）
 
 ### 1. [2026-08-06] conda libmamba solver 缺陷
