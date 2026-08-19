@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026-08-20] 归档 v1.1 —— 部署 + ACP 全链路完成（archive-20260820）
+
+- 服务端：默认 **262K 全功能档**（MTP + mmproj + 图片输入，实测 27.7GB）；
+  512K + 视觉档备选（YaRN + 自定义补丁移除 capping，30.4GB）；1M 确认 32GB 卡不可行
+- 图片输入双通道实测通过（chat/completions + responses API，Codex 路径）
+- VS Code ACP 打通：config.toml provider + settings.json「Codex CLI (Qwen38)」+
+  models.json 注册（消除 metadata 警告）+ profile 别名 codex-q38
+- ACP 同会话三轮连续推理实测通过（thoughtTokens 0，多轮记忆完好）
+- 归档标签：`archive-20260820`
+
 ## [2026-08-19] 初始发布 v1.0
 
 - 新建项目：Qwen3.8-27B 单卡 RTX 5090 部署（llama.cpp llama-server + GGUF）
