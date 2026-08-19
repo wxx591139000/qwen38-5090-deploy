@@ -1,0 +1,26 @@
+# 密钥与配置
+*.env
+!*.env.example
+.api_key
+.api_keys
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# 模型与产物（不要让大文件进仓库）
+models/
+*.safetensors
+*.gguf
+*.bin
+*.part*
+outputs/
+logs/
+*.log
+
+# 系统
+.DS_Store
+Thumbs.db

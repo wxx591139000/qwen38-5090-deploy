@@ -1,0 +1,134 @@
+# Qwen3.8-27B 单卡 RTX 5090 生产部署
+
+在 **AutoDL RTX 5090（32GB）单卡** 上，用 **llama.cpp llama-server + GGUF** 部署
+**Qwen3.8-27B**，提供生产级 OpenAI 兼容 API（`/v1/chat/completions`、
+`/v1/responses`、`/v1/models`、`/health`），供本地 Hermes / Claude Code /
+Codex / 自研工具调用，支持**多用户（每人一个 API key）**。
+
+> 本仓库是旧项目 `qwen36-5090-deploy` 的升级版。3.8 是全新的混合注意力
+> 架构（`qwen35` GGUF 架构），**llama.cpp 必须用发布后的最新构建**，旧二进制
+> 直接报架构错误。
+
+## 方案要点
+
+- **引擎**：llama.cpp llama-server（Blackwell sm_120 兼容最稳，长上下文最优）
+- **模型**：官方 `ggml-org/Qwen3.8-27B-GGUF` Q4_K_M（18.97GB，标准 K-quants）
+- **MTP 推测解码**：`mtp-Qwen3.8-27B-Q4_0.gguf` + `--spec-type draft-mtp`，单用户提速 ~1.5x
+- **多模态**：`mmproj-Qwen3.8-27B-Q8_0.gguf` 视觉投影器（可选，默认加载）
+- **暴露**：AutoDL 自定义服务公网 HTTPS URL + API Key 鉴权（`.api_keys` 每行一把）
+- **成本策略**：无卡模式下并行下载 + 编译，运行才带卡
+- **thinking 关闭**：`--reasoning off` + 修复后的官方模板（零思考消耗）
+
+## 与 Qwen3.6 部署的差异
+
+| 项 | Qwen3.6（旧仓库） | Qwen3.8（本仓库） |
+|---|---|---|
+| GGUF 架构 | qwen3 | **qwen35（新，需最新 llama.cpp）** |
+| 注意力 | 全注意力 | 16/64 层全注意力 + 48 层 Gated DeltaNet，KV 缓存约为传统 1/4 |
+| 上下文 | 131072 | 原生 262144（本仓库默认 131072，可调） |
+| 推测解码 | 无 | MTP 头（ggml-org 包自带） |
+| 多模态 | 无 | mmproj 视觉投影器（约 0.63GB） |
+| 模板坑 | system 位置检查 | system 位置检查 + **多轮空 thinking 块**（已修） |
+| 下载 | hf-mirror 单连接 curl（~700KB/s） | **ModelScope 16 线程并行（5-10MB/s）** |
+
+## 快速开始
+
+### 1. 租卡（AutoDL 控制台）
+
+- GPU：RTX 5090（32GB）× 1
+- 镜像：CUDA 12.8+（sm_120 必需）
+- 先切**无卡模式**再下载/编译（省 GPU 计费），运行前切带卡
+
+### 2. 下载模型（无卡模式）
+
+```bash
+cd /root/autodl-tmp/models
+/root/miniconda3/bin/python parallel_dl.py --jobs 16
+```
+
+或单连接 curl（hf-mirror，慢但可断点续传）：
+
+```bash
+curl -L -C - -o Qwen3.8-27B-Q4_K_M.gguf \
+  https://hf-mirror.com/ggml-org/Qwen3.8-27B-GGUF/resolve/main/Qwen3.8-27B-Q4_K_M.gguf
+```
+
+### 3. 编译（无卡模式）
+
+```bash
+cd /root/autodl-tmp/llama.cpp
+git fetch --depth 1 origin master && git checkout -f FETCH_HEAD
+cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
+  -DCMAKE_CUDA_ARCHITECTURES=120 -DCMAKE_BUILD_TYPE=Release \
+  -DGGML_NATIVE=OFF -DGGML_CCACHE=OFF \
+  -DCUDA_cuda_driver_LIBRARY=/usr/local/cuda/lib64/stubs/libcuda.so \
+  -DCMAKE_EXE_LINKER_FLAGS="-lcuda -L/usr/local/cuda/lib64/stubs" -DLLAMA_BUILD_UI=OFF
+cmake --build build --config Release -j1 --target llama-server
+```
+
+> 无卡模式 cgroup 内存只有 2GB，必须 `-j1`；`-j4` 以上会被 OOM 杀进程。
+
+### 4. 模板（无卡模式）
+
+```bash
+/root/miniconda3/bin/python -m pip install gguf
+/root/miniconda3/bin/python scripts/extract_template.py \
+  /root/autodl-tmp/models/Qwen3.8-27B-Q4_K_M.gguf /root/autodl-tmp/qwen38_template.jinja
+```
+
+### 5. 启动（带卡模式）
+
+```bash
+bash /root/autodl-tmp/start_llama_server.sh   # 6 key 鉴权，端口 6006
+```
+
+### 6. 验证
+
+```bash
+bash scripts/verify.sh
+curl http://127.0.0.1:6006/health
+curl http://127.0.0.1:6006/v1/models -H "Authorization: Bearer $KEY"
+curl http://127.0.0.1:6006/v1/chat/completions \
+  -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
+  -d '{"model":"qwen3.8-27b","messages":[{"role":"user","content":"你好"}]}'
+```
+
+### 7. 生产化
+
+- **公网暴露**：AutoDL 控制台「自定义服务」把 6006 映射为公网 HTTPS URL
+- **自启/崩溃重启**：`cp deploy/qwen38.service /etc/systemd/system/ && systemctl enable --now qwen38`
+- **本地对接**：复制 `.env.example` → `.env`，填公网 URL 和 key，
+  Hermes / Claude Code 用 `base_url + api_key + model=qwen3.8-27b` 直连
+
+## 项目结构
+
+```
+qwen38-5090-deploy/
+├── master_deploy.sh            # 一键部署（下载→编译→模板→key→systemd）
+├── deploy/
+│   └── qwen38.service          # systemd 自启服务（llama-server 版本）
+├── scripts/
+│   ├── parallel_dl.py          # ModelScope 16 线程并行下载器
+│   ├── extract_template.py     # GGUF 模板提取 + 两处修复
+│   ├── start_llama_server.sh   # 启动脚本（MTP + mmproj + 多 key）
+│   └── verify.sh               # 服务验证（health/models/chat/responses/鉴权）
+├── .env.example                # 本地对接配置模板
+└── docs/                       # SPEC/ARCHITECTURE/DEPLOYMENT/TEST_PLAN/PITFALLS/PROGRESS
+```
+
+## 性能调优要点
+
+- `-fa on`：Flash Attention，30 系及以上必开，约 3x 提速、省 40% 显存
+- `-ngl 999`：全层下 GPU
+- `-ctk/-ctv q4_0`：KV 缓存量化到 1/4，长上下文核心
+- MTP（`--spec-type draft-mtp`）：单用户最高 ~1.5x；高并发建议关闭
+- `--reasoning off` + 修复模板：Codex 等 Agent 零思考消耗
+
+## 备份 / 兜底
+
+- 无卡模式仅能下载/编译，**运行必须切带卡**（无卡 driver 是 0 字节 stub）
+- 完整方案与踩坑见 `docs/DEPLOYMENT.md`、`docs/PITFALLS.md`
+
+## License
+
+MIT
