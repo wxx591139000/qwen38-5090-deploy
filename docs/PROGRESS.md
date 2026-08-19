@@ -9,12 +9,13 @@
 | 阅读旧项目 qwen36-5090-deploy，确定升级路线 | ✅ |
 | Qwen3.8-27B 方案确认（ggml-org GGUF + MTP + mmproj） | ✅ |
 | 本地项目脚手架（脚本/文档/systemd/env） | ✅ |
-| 服务器无卡模式：并行下载模型（ModelScope 16 线程） | 🔄 下载中 |
-| 服务器无卡模式：llama.cpp 更新 + sm_120 编译 | ⏳ 待下载完成 |
-| 模板提取修复 + 启动脚本 + key 配置 | ⏳ |
+| GitHub 仓库推送（wxx591139000/qwen38-5090-deploy） | ✅ |
+| 服务器无卡模式：并行下载模型（ModelScope 16 线程） | 🔄 下载中（~26%） |
+| 服务器无卡模式：llama.cpp 更新（github 直连超时 → 本地 tarball 上传） | ✅ |
+| 服务器无卡模式：llama-server sm_120 编译 | ⏳ 待下载完成（2GB 内存墙串行） |
+| 模板提取修复 + 启动脚本 + key 配置 | ⏳ 待模型下载 |
 | 切带卡：启动 llama-server + 端到端验证 | ⏳ 依赖用户切带卡 |
 | 公网暴露确认（AutoDL 自定义服务 6006） | ⏳ 依赖控制台 |
-| GitHub 推送 | ⏳ |
 
 ## 2. 已完成功能清单
 
@@ -25,6 +26,10 @@
 - ✅ `deploy/qwen38.service`：systemd 自启（llama-server 版本，旧项目缺口已补）
 - ✅ `scripts/verify.sh`：health/models/chat/responses/鉴权验证
 - ✅ 文档 6 份 + README + CHANGELOG
+- ✅ GitHub：`https://github.com/wxx591139000/qwen38-5090-deploy`（public, master）
+- ✅ llama.cpp 更新到最新 master（github.com 直连超时，本地下载 tarball 后 SFTP 上传）
+- ✅ 参数确认：`--spec-type draft-mtp` / `-md` / `--mmproj` / `--reasoning off`
+  （`--reasoning off` 会向模板传 `enable_thinking=false`，与模板修复方案吻合）
 
 ## 3. 进行中 / 待办
 
