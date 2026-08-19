@@ -18,7 +18,12 @@
 | CPU 版全量验证 | ❌ 19GB 模型在 2GB cgroup 下加载被 SIGKILL（页缓存反复回收），改由 GPU 模式验证 |
 | 启动脚本 + key 配置（沿用 6 把）+ qwen38.service 安装 | ✅（AutoDL 无 systemd，改用控制台/脚本自启） |
 | 二进制验证（ldd 无缺失、CUDA 库 61MB、无卡报 libcuda stub = 正常） | ✅ |
-| 切带卡：启动 llama-server + 端到端验证 | ⏳ 依赖用户切带卡（唯一剩余步骤） |
+| 切带卡：启动 llama-server（6006 + 公网 8443）+ 端到端验证 | ✅ |
+| 多轮连续推理（chat/completions 三轮跨轮记忆 + system 中间容忍） | ✅ |
+| Responses API（Codex wire_api=responses 用） | ✅ |
+| codex exec 多步代理循环（写文件→读文件→回答） | ✅ |
+| VS Code ACP 握手 + 同一会话三轮连续对话（ACP 协议实测） | ✅ thoughtTokens:0 |
+| 本地配置：config.toml qwen38 provider + VS Code「Codex CLI (Qwen38)」 | ✅ |
 | 公网暴露确认（AutoDL 自定义服务 6006） | ⏳ 依赖控制台 |
 
 ## 2. 已完成功能清单

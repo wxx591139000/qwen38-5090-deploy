@@ -102,6 +102,35 @@ curl http://127.0.0.1:6006/v1/chat/completions \
 - **本地对接**：复制 `.env.example` → `.env`，填公网 URL 和 key，
   Hermes / Claude Code 用 `base_url + api_key + model=qwen3.8-27b` 直连
 
+### 8. VS Code ACP（Codex 面板，实测通过）
+
+`~/.codex/config.toml` 新增 provider：
+
+```toml
+[model_providers.qwen38]
+name = "Qwen3.8-27B (AutoDL RTX5090)"
+wire_api = "responses"
+base_url = "https://<你的AutoDL公网URL>/v1"
+experimental_bearer_token = "<.api_keys 里的一把 key>"
+```
+
+VS Code `settings.json` → `acp.agents` 新增（改后 `Developer: Reload Window`，
+ACP 面板选「Codex CLI (Qwen38)」）：
+
+```json
+"Codex CLI (Qwen38)": {
+  "command": "codex-acp",
+  "args": [],
+  "env": {
+    "MODEL_PROVIDER": "qwen38",
+    "CODEX_CONFIG": "{\"model\":\"qwen3.8-27b\",\"model_provider\":\"qwen38\"}"
+  }
+}
+```
+
+已实测：同一 ACP 会话三轮连续提问，上下文完整保留（记住信息→跨轮复述），
+`thoughtTokens: 0`，无思考垃圾文本（qwen3.6 的「无法连续推理」已修复）。
+
 ## 项目结构
 
 ```
