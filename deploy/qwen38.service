@@ -1,4 +1,4 @@
-# Qwen3.8-27B LLM Service (llama-server, RTX 5090, 512K YaRN 档)
+# Qwen3.8-27B LLM Service (llama-server, RTX 5090, 262K 全功能档)
 # 放到 /etc/systemd/system/qwen38.service
 # 用法: systemctl daemon-reload && systemctl enable --now qwen38
 [Unit]
@@ -12,15 +12,16 @@ ExecStart=/root/autodl-tmp/llama.cpp/build/bin/llama-server \
   -m /root/autodl-tmp/models/Qwen3.8-27B-Q4_K_M.gguf \
   --alias qwen3.8-27b \
   -ngl 999 \
-  -c 524288 \
+  -c 262144 \
   -fa on \
   -ctk q4_0 -ctv q4_0 \
-  -b 512 -ub 128 \
   -np 1 \
   --reasoning off \
   --jinja \
   --chat-template-file /root/autodl-tmp/qwen38_template.jinja \
-  --rope-scaling yarn --yarn-orig-ctx 262144 \
+  -md /root/autodl-tmp/models/mtp-Qwen3.8-27B-Q4_0.gguf \
+  --spec-type draft-mtp \
+  --mmproj /root/autodl-tmp/models/mmproj-Qwen3.8-27B-Q8_0.gguf \
   --host 0.0.0.0 --port 6006 \
   --api-key-file /root/autodl-tmp/.api_keys
 Restart=always

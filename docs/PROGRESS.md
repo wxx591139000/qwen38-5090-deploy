@@ -25,7 +25,8 @@
 | VS Code ACP 握手 + 同一会话三轮连续对话（ACP 协议实测） | ✅ thoughtTokens:0 |
 | 本地配置：config.toml qwen38 provider + VS Code「Codex CLI (Qwen38)」 | ✅ |
 | 512K 上下文（YaRN + 自定义补丁移除 capping）实测通过（n_ctx 524288） | ✅ |
-| 262K 全功能档（MTP + mmproj）备用脚本 | ✅ |
+| 262K 全功能档（MTP + mmproj）实测：显存 27.7GB，图片输入 chat/responses 双通道通过 | ✅ |
+| 512K + 视觉档实测：显存 30.4GB，capabilities 含 multimodal | ✅ |
 | 公网暴露确认（AutoDL 自定义服务 6006） | ⏳ 依赖控制台 |
 
 ## 2. 已完成功能清单

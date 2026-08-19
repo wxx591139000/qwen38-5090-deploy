@@ -11,11 +11,11 @@
 | mtp-Qwen3.8-27B-Q4_0.gguf | 1.68GB | MTP 推测解码头 |
 | mmproj-Qwen3.8-27B-Q8_0.gguf | 0.63GB | 视觉投影器（可选） |
 
-32GB 显存账本（Q4_K_M）：
+32GB 显存账本（Q4_K_M，全部实测）：
 - 权重 ≈ 19GB + MTP 头 ≈ 1.7GB + mmproj ≈ 1GB ≈ **21.7GB**
 - KV（q4_0，实测）：131K ≈ 1.9GB、262K ≈ 3.7GB、512K ≈ 7.4GB
-- **512K 档**（默认）：纯主模型 ≈ 29.5GB（无 MTP/mmproj，MTP 的 KV 会翻倍导致 OOM）
-- **262K 全功能档**：MTP + mmproj 可全开 ≈ 26GB
+- **262K 全功能档（默认）**：MTP + mmproj 全开 ≈ **27.7GB**（图片输入实测通过）
+- **512K + 视觉档**：YaRN + mmproj（无 MTP）≈ **30.4GB**（MTP 的 KV 会翻倍导致 OOM）
 - 1M：≈38GB，32GB 卡装不下（需 48GB+ 或降到 IQ2 量化）
 
 ## 2.5 512K 自定义补丁（必须）
@@ -80,10 +80,20 @@ cmake --build build --config Release -j1 --target llama-server
 ### 3.5 切带卡，启动
 
 ```bash
-bash /root/autodl-tmp/start_llama_server.sh   # 512K YaRN 档
-# 或：bash /root/autodl-tmp/scripts/start_llama_server_262k.sh  # 262K 全功能
+bash /root/autodl-tmp/start_llama_server.sh   # 262K 全功能档（默认）
+# 或：bash /root/autodl-tmp/scripts/start_llama_server_512k.sh  # 512K + 视觉
 tail -f /root/autodl-tmp/llama_server.log
 ```
+
+### 3.51 图片输入验证（2026-08-20 实测）
+
+```bash
+# 生成纯色测试图并走 chat/completions（蓝色图 → "图片里是蓝色的"）
+# 走 Codex 的 responses API（红色图 → "图片是红色"）同样通过
+```
+
+图片以 OpenAI 兼容 `image_url`（data URI）传入即可；`/v1/models` capabilities 显示
+`["completion","multimodal"]`。
 
 ### 3.6 验证
 

@@ -15,8 +15,8 @@ Codex / 自研工具调用，支持**多用户（每人一个 API key）**。
 - **模型**：官方 `ggml-org/Qwen3.8-27B-GGUF` Q4_K_M（18.97GB，标准 K-quants）
 - **MTP 推测解码**：`mtp-Qwen3.8-27B-Q4_0.gguf` + `--spec-type draft-mtp`，单用户提速 ~1.5x
 - **多模态**：`mmproj-Qwen3.8-27B-Q8_0.gguf` 视觉投影器（可选，默认加载）
-- **上下文**：默认 **512K**（YaRN 扩长，`--rope-scaling yarn --yarn-orig-ctx 262144`）；
-  另有 **262K 全功能档**（MTP + mmproj 可全开，见 `start_llama_server_262k.sh`）
+- **上下文**：默认 **262K**（原生）+ MTP + mmproj 全功能（图片输入实测通过）；
+  另有 **512K + 视觉档**（YaRN 扩长，无 MTP，见 `start_llama_server_512k.sh`）
 - **暴露**：AutoDL 自定义服务公网 HTTPS URL + API Key 鉴权（`.api_keys` 每行一把）
 - **成本策略**：无卡模式下并行下载 + 编译，运行才带卡
 - **thinking 关闭**：`--reasoning off` + 修复后的官方模板（零思考消耗）
@@ -27,7 +27,7 @@ Codex / 自研工具调用，支持**多用户（每人一个 API key）**。
 |---|---|---|
 | GGUF 架构 | qwen3 | **qwen35（新，需最新 llama.cpp）** |
 | 注意力 | 全注意力 | 16/64 层全注意力 + 48 层 Gated DeltaNet，KV 缓存约为传统 1/4 |
-| 上下文 | 131072 | 默认 524288（YaRN）；262K 全功能档可开 MTP+mmproj |
+| 上下文 | 131072 | 默认 262144 全功能（MTP+mmproj+图片）；512K+视觉档可选 |
 | 推测解码 | 无 | MTP 头（ggml-org 包自带） |
 | 多模态 | 无 | mmproj 视觉投影器（约 0.63GB） |
 | 模板坑 | system 位置检查 | system 位置检查 + **多轮空 thinking 块**（已修） |
@@ -81,9 +81,9 @@ cmake --build build --config Release -j1 --target llama-server
 ### 5. 启动（带卡模式）
 
 ```bash
-bash /root/autodl-tmp/start_llama_server.sh   # 512K YaRN 档（6 key 鉴权，端口 6006）
-# 或 262K 全功能档（MTP + 视觉）：
-bash /root/autodl-tmp/scripts/start_llama_server_262k.sh
+bash /root/autodl-tmp/start_llama_server.sh   # 262K 全功能档（6 key 鉴权，端口 6006）
+# 或最大上下文（512K + 视觉，无 MTP）：
+bash /root/autodl-tmp/scripts/start_llama_server_512k.sh
 ```
 
 ### 6. 验证
@@ -163,8 +163,8 @@ qwen38-5090-deploy/
 
 | 档位 | 配置 | 显存 | 特性 |
 |------|------|------|------|
-| **512K（默认）** | `-c 524288 --rope-scaling yarn --yarn-orig-ctx 262144` | ~29.5GB | 纯主模型（无 MTP/mmproj） |
-| 262K 全功能 | `-c 262144` + MTP + mmproj | ~26GB | 推测解码 + 视觉 |
+| **262K 全功能（默认）** | `-c 262144` + MTP + mmproj | ~27.7GB | 推测解码 + 视觉（图片实测通过） |
+| 512K + 视觉 | `-c 524288` + YaRN + mmproj（无 MTP） | ~30.4GB | 最大上下文 + 视觉 |
 | 1M | YaRN factor 4 | >38GB ❌ | 32GB 卡装不下（需 48GB+ 或 IQ2 低质量量化） |
 
 > 512K 需要自定义补丁：llama-server 默认把槽位上下文封顶在模型训练长度（262K），
