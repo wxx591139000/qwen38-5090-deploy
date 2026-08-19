@@ -96,7 +96,9 @@ curl http://127.0.0.1:6006/v1/chat/completions \
 ### 7. 生产化
 
 - **公网暴露**：AutoDL 控制台「自定义服务」把 6006 映射为公网 HTTPS URL
-- **自启/崩溃重启**：`cp deploy/qwen38.service /etc/systemd/system/ && systemctl enable --now qwen38`
+- **自启/崩溃重启**：AutoDL 容器无 systemd（PID 1 = bash），
+  请在 AutoDL 控制台配置开机自启（执行 `bash /root/autodl-tmp/start_llama_server.sh`）；
+  标准 Linux 服务器可用 `deploy/qwen38.service`（`systemctl enable --now qwen38`）
 - **本地对接**：复制 `.env.example` → `.env`，填公网 URL 和 key，
   Hermes / Claude Code 用 `base_url + api_key + model=qwen3.8-27b` 直连
 

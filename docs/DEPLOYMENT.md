@@ -80,7 +80,10 @@ bash scripts/verify.sh
 
 ### 3.7 生产化
 
-- systemd：`cp deploy/qwen38.service /etc/systemd/system/ && systemctl enable --now qwen38`
+- **AutoDL 容器无 systemd**（PID 1 = bash，`systemctl` 不可用）：
+  - 手动启动：`bash /root/autodl-tmp/start_llama_server.sh`
+  - 开机自启：AutoDL 控制台配置（切带卡后自动执行启动脚本）
+- **标准 Linux 服务器**：`cp deploy/qwen38.service /etc/systemd/system/ && systemctl enable --now qwen38`
 - 公网：AutoDL「自定义服务」把 6006 映射为公网 HTTPS URL（沿用旧映射端口）
 
 ## 4. 性能调优

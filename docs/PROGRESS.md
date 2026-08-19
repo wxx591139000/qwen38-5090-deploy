@@ -12,8 +12,10 @@
 | GitHub 仓库推送（wxx591139000/qwen38-5090-deploy） | ✅ |
 | 服务器无卡模式：并行下载模型（ModelScope 16 线程） | 🔄 下载中（~26%） |
 | 服务器无卡模式：llama.cpp 更新（github 直连超时 → 本地 tarball 上传） | ✅ |
-| 服务器无卡模式：llama-server sm_120 编译 | ⏳ 待下载完成（2GB 内存墙串行） |
-| 模板提取修复 + 启动脚本 + key 配置 | ⏳ 待模型下载 |
+| 模型下载完成（Q4_K_M 18.97GB + MTP 1.68GB + mmproj 0.63GB，大小全部校验） | ✅ |
+| 模板提取修复（qwen38_template.jinja，两处修复已应用） | ✅ |
+| 服务器无卡模式：llama-server sm_120 编译 | 🔄 编译中（-j1，2-4h） |
+| 启动脚本 + key 配置（沿用 6 把）+ qwen38.service 安装 | ✅（AutoDL 无 systemd，改用控制台/脚本自启） |
 | 切带卡：启动 llama-server + 端到端验证 | ⏳ 依赖用户切带卡 |
 | 公网暴露确认（AutoDL 自定义服务 6006） | ⏳ 依赖控制台 |
 
