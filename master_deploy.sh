@@ -44,17 +44,7 @@ if [ ! -f "$LLAMA_DIR/CMakeLists.txt" ]; then
   mv "$(dirname "$LLAMA_DIR")/llama.cpp-master" "$LLAMA_DIR"
   rm -f /tmp/llama_master.tar.gz
 fi
-cd "$LLAMA_DIR"
-rm -rf build
-cmake -B build -DGGML_CUDA=ON \
-  -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
-  -DCMAKE_CUDA_ARCHITECTURES=120 \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DGGML_NATIVE=OFF -DGGML_CCACHE=OFF \
-  -DCUDA_cuda_driver_LIBRARY=/usr/local/cuda/lib64/stubs/libcuda.so \
-  -DCMAKE_EXE_LINKER_FLAGS="-lcuda -L/usr/local/cuda/lib64/stubs" \
-  -DLLAMA_BUILD_UI=OFF
-cmake --build build --config Release -j1 --target llama-server
+bash "$(dirname "$0")/scripts/build_llama.sh"
 
 step "[3/5] 提取并修复聊天模板"
 "$PY" -m pip install -q gguf 2>/dev/null || true
