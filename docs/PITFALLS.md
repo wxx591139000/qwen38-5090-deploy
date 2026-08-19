@@ -52,6 +52,11 @@ AutoDL 实例凌晨 4 点关机，但数据盘 `/root/autodl-tmp` 保留，llama
 build 对象不丢。重启后 `cmake --build build -j3 --target llama-server`
 增量续跑即可（GPU 模式可 -j8）。已封装 `scripts/resume_build_and_start.sh`。
 
+### 30. [2026-08-20] 编译 97% 时 server-task.cpp 被 SIGKILL（cc1plus Killed）
+llama.cpp 服务端几个大文件（server-task/server-chat/server-queue/server-common）
+与 mtmd/common 同时编译时内存峰值超 2GB，`cc1plus` 被杀。
+→ 收尾阶段降 `-j2` 续跑即过（对象保留，增量秒续）。
+
 ## 旧项目经验（沿用）
 
 ### 1. [2026-08-06] conda libmamba solver 缺陷
