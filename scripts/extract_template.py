@@ -41,8 +41,8 @@ def read_template(gguf_path: str) -> str:
 
 def fix_template(tpl: str) -> str:
     # 1. system 位置检查 → 空操作
-    before = "raise_exception('System message must be at the beginning.')"
-    after = "''  # tolerate system message anywhere (llama.cpp clients)"
+    before = "{{- raise_exception('System message must be at the beginning.') }}"
+    after = "{#- tolerate system messages anywhere (llama.cpp clients may reorder) -#}"
     if before in tpl:
         tpl = tpl.replace(before, after)
     else:
