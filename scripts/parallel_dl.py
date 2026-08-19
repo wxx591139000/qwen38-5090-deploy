@@ -14,11 +14,24 @@ Chunk parts (.partN) are merged automatically; re-running resumes/skips done fil
 
 import argparse
 import os
+import socket
 import sys
 import threading
 import time
 import urllib.parse
 import urllib.request
+
+# AutoDL 容器 IPv6 路由不通：ModelScope CDN 解析出 IPv6 地址时连接会挂起。
+# 强制只走 IPv4（Kunlun CDN 有 v4 节点，实测稳定）。
+_orig_getaddrinfo = socket.getaddrinfo
+
+
+def _v4_getaddrinfo(*args, **kwargs):
+    results = _orig_getaddrinfo(*args, **kwargs)
+    return [r for r in results if r[0] == socket.AF_INET]
+
+
+socket.getaddrinfo = _v4_getaddrinfo
 
 BASE = (
     "https://modelscope.cn/api/v1/models/"
@@ -56,7 +69,15 @@ def dl_chunk(
     )
     for attempt in range(20):
         try:
-            with urllib.request.urlopen(req, timeout=180) as r, open(part, "wb") as f:
+            # 断点续传：已有 part 文件则从当前位置继续
+            cur = 0
+            if os.path.exists(part):
+                cur = os.path.getsize(part)
+            if cur > end - start + 1:
+                return True  # 已完整
+            if cur > 0:
+                req.headers["Range"] = "bytes=%d-%d" % (start + cur, end)
+            with urllib.request.urlopen(req, timeout=60) as r, open(part, "ab" if cur else "wb") as f:
                 while True:
                     buf = r.read(1 << 20)
                     if not buf:
@@ -90,11 +111,31 @@ def download_file(fname: str, size: int, jobs: int, dest: str) -> bool:
     progress = [0]
     lock = threading.Lock()
     threads = []
+
+    def monitor():
+        last = [0, time.time()]
+        while any(t.is_alive() for t in threads):
+            with lock:
+                done = progress[0]
+            now = time.time()
+            delta = now - last[1]
+            if delta >= 30:
+                rate = (done - last[0]) / delta
+                print(
+                    "STAT %s %d bytes (%.2f MB/s aggregate)" % (fname, done, rate / 1e6),
+                    flush=True,
+                )
+                last[0], last[1] = done, now
+            time.sleep(5)
+
     for i in range(n):
         start = i * chunk
         end = size - 1 if i == n - 1 else (i + 1) * chunk - 1
         part = "%s.part%d" % (path, i)
         parts.append((part, start))
+        if os.path.exists(part) and os.path.getsize(part) == end - start + 1:
+            progress[0] += os.path.getsize(part)
+            continue
         t = threading.Thread(
             target=dl_chunk,
             args=(fname, start, end, part, i, progress, lock),
@@ -102,6 +143,7 @@ def download_file(fname: str, size: int, jobs: int, dest: str) -> bool:
         )
         t.start()
         threads.append(t)
+    threading.Thread(target=monitor, daemon=True).start()
     ok = True
     for t in threads:
         t.join(10800)
