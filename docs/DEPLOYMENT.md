@@ -13,9 +13,21 @@
 
 32GB 显存账本（Q4_K_M）：
 - 权重 ≈ 19GB + MTP 头 ≈ 1.7GB + mmproj ≈ 1GB ≈ **21.7GB**
-- 剩余 ≈ 10GB 给 KV 缓存：Qwen3.8 混合注意力 KV 只有传统 1/4，
-  32K ≈ 2GB、131K（q4_0 量化后）≈ 4-5GB → 131072 上下文从容
-- 262144 原生上下文全开 + mmproj + MTP 会顶到上限，默认不启用
+- KV（q4_0，实测）：131K ≈ 1.9GB、262K ≈ 3.7GB、512K ≈ 7.4GB
+- **512K 档**（默认）：纯主模型 ≈ 29.5GB（无 MTP/mmproj，MTP 的 KV 会翻倍导致 OOM）
+- **262K 全功能档**：MTP + mmproj 可全开 ≈ 26GB
+- 1M：≈38GB，32GB 卡装不下（需 48GB+ 或降到 IQ2 量化）
+
+## 2.5 512K 自定义补丁（必须）
+
+llama-server 默认把槽位上下文封顶在模型训练长度（262144），即使 `-c 524288` 也只给 262K。
+已修改 `tools/server/server-context.cpp` 移除该封顶（配合 YaRN 扩长）并重新编译：
+
+```bash
+# 改动点：把 capping 分支改为仅告警，不再截断 n_ctx_slot
+cd /root/autodl-tmp/llama.cpp
+cmake --build build --config Release -j8 --target llama-server
+```
 
 ## 2. 关键前提
 
@@ -68,7 +80,8 @@ cmake --build build --config Release -j1 --target llama-server
 ### 3.5 切带卡，启动
 
 ```bash
-bash /root/autodl-tmp/start_llama_server.sh
+bash /root/autodl-tmp/start_llama_server.sh   # 512K YaRN 档
+# 或：bash /root/autodl-tmp/scripts/start_llama_server_262k.sh  # 262K 全功能
 tail -f /root/autodl-tmp/llama_server.log
 ```
 

@@ -10,7 +10,7 @@
 
 核心目标：
 - 27B 量级高质量模型（Terminal Bench 2.1 73.0，较 3.6 提升 9.6 分，厂商口径）
-- 长上下文（默认 131072，原生支持 262144）
+- 长上下文（默认 524288 YaRN 扩长；另有 262K 全功能档）
 - OpenAI 兼容 API（chat/completions、responses、models、health）
 - 生产级：API Key 鉴权、后台守护、健康检查、日志
 - 多用户：每人一个独立 API key

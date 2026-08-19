@@ -57,6 +57,22 @@ llama.cpp 服务端几个大文件（server-task/server-chat/server-queue/server
 与 mtmd/common 同时编译时内存峰值超 2GB，`cc1plus` 被杀。
 → 收尾阶段降 `-j2` 续跑即过（对象保留，增量秒续）。
 
+### 31. [2026-08-20] llama-server 把槽位上下文封顶在训练长度（262K），`-c 524288` 无效
+带卡实测 `-c 524288` 后日志显示 `n_ctx_slot = 262144`（"exceeds the training context - capping"），
+/v1/models 的 n_ctx 也是 262144。
+→ 源码无开关，改 `tools/server/server-context.cpp` 移除 capping 分支（改为仅告警），
+  增量重编 llama-server 即可；配合 `--rope-scaling yarn --yarn-orig-ctx 262144`，
+  实测 512K 档正常（n_ctx 524288，显存 29.5GB）。
+
+### 32. [2026-08-20] 512K 下 MTP/mmproj 显存不够（OOM）
+512K 时 KV 缓存 ~7.4GB；MTP 草稿模型会**再分配一份 512K KV**（+~7GB），
+mmproj 再 +1GB，总量超 32GB → `cudaMalloc failed: out of memory`。
+→ 512K 档用纯主模型（无 MTP/mmproj）；需要 MTP+视觉时切 262K 全功能档。
+
+### 33. [2026-08-20] 1M 上下文在 32GB 卡上不可行
+1M 的 KV（q4_0）≈14.8GB + 权重 21.7GB ≈ 38GB > 32GB。
+→ 32GB 卡上限 512K；1M 需 48GB+ 显卡，或降 IQ2 量化（质量明显下降，不推荐）。
+
 ## 旧项目经验（沿用）
 
 ### 1. [2026-08-06] conda libmamba solver 缺陷

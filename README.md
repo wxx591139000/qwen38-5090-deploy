@@ -15,6 +15,8 @@ Codex / 自研工具调用，支持**多用户（每人一个 API key）**。
 - **模型**：官方 `ggml-org/Qwen3.8-27B-GGUF` Q4_K_M（18.97GB，标准 K-quants）
 - **MTP 推测解码**：`mtp-Qwen3.8-27B-Q4_0.gguf` + `--spec-type draft-mtp`，单用户提速 ~1.5x
 - **多模态**：`mmproj-Qwen3.8-27B-Q8_0.gguf` 视觉投影器（可选，默认加载）
+- **上下文**：默认 **512K**（YaRN 扩长，`--rope-scaling yarn --yarn-orig-ctx 262144`）；
+  另有 **262K 全功能档**（MTP + mmproj 可全开，见 `start_llama_server_262k.sh`）
 - **暴露**：AutoDL 自定义服务公网 HTTPS URL + API Key 鉴权（`.api_keys` 每行一把）
 - **成本策略**：无卡模式下并行下载 + 编译，运行才带卡
 - **thinking 关闭**：`--reasoning off` + 修复后的官方模板（零思考消耗）
@@ -25,7 +27,7 @@ Codex / 自研工具调用，支持**多用户（每人一个 API key）**。
 |---|---|---|
 | GGUF 架构 | qwen3 | **qwen35（新，需最新 llama.cpp）** |
 | 注意力 | 全注意力 | 16/64 层全注意力 + 48 层 Gated DeltaNet，KV 缓存约为传统 1/4 |
-| 上下文 | 131072 | 原生 262144（本仓库默认 131072，可调） |
+| 上下文 | 131072 | 默认 524288（YaRN）；262K 全功能档可开 MTP+mmproj |
 | 推测解码 | 无 | MTP 头（ggml-org 包自带） |
 | 多模态 | 无 | mmproj 视觉投影器（约 0.63GB） |
 | 模板坑 | system 位置检查 | system 位置检查 + **多轮空 thinking 块**（已修） |
@@ -79,7 +81,9 @@ cmake --build build --config Release -j1 --target llama-server
 ### 5. 启动（带卡模式）
 
 ```bash
-bash /root/autodl-tmp/start_llama_server.sh   # 6 key 鉴权，端口 6006
+bash /root/autodl-tmp/start_llama_server.sh   # 512K YaRN 档（6 key 鉴权，端口 6006）
+# 或 262K 全功能档（MTP + 视觉）：
+bash /root/autodl-tmp/scripts/start_llama_server_262k.sh
 ```
 
 ### 6. 验证
@@ -154,6 +158,17 @@ qwen38-5090-deploy/
 - `-ctk/-ctv q4_0`：KV 缓存量化到 1/4，长上下文核心
 - MTP（`--spec-type draft-mtp`）：单用户最高 ~1.5x；高并发建议关闭
 - `--reasoning off` + 修复模板：Codex 等 Agent 零思考消耗
+
+## 上下文档位与显存（RTX 5090 32GB 实测）
+
+| 档位 | 配置 | 显存 | 特性 |
+|------|------|------|------|
+| **512K（默认）** | `-c 524288 --rope-scaling yarn --yarn-orig-ctx 262144` | ~29.5GB | 纯主模型（无 MTP/mmproj） |
+| 262K 全功能 | `-c 262144` + MTP + mmproj | ~26GB | 推测解码 + 视觉 |
+| 1M | YaRN factor 4 | >38GB ❌ | 32GB 卡装不下（需 48GB+ 或 IQ2 低质量量化） |
+
+> 512K 需要自定义补丁：llama-server 默认把槽位上下文封顶在模型训练长度（262K），
+> 本仓库已打补丁移除该上限（见 PITFALLS #31）。
 
 ## 备份 / 兜底
 
