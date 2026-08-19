@@ -33,10 +33,18 @@ if [ ! -f "$MODEL_DIR/parallel_dl.py" ]; then
 fi
 "$PY" "$MODEL_DIR/parallel_dl.py" --dest "$MODEL_DIR" --jobs 16
 
-step "[2/5] 更新 llama.cpp 并编译（sm_120，无卡模式 -j1 应对 2GB cgroup 内存）"
+step "[2/5] 准备 llama.cpp 源码并编译（sm_120，无卡模式 -j1 应对 2GB cgroup 内存）"
+if [ ! -f "$LLAMA_DIR/CMakeLists.txt" ]; then
+  mkdir -p "$LLAMA_DIR"
+  echo "   源码缺失，从 gh-proxy 下载 master tarball（github 直连在国内经常超时）"
+  curl -L --retry 3 -o /tmp/llama_master.tar.gz \
+    "https://gh-proxy.com/https://github.com/ggml-org/llama.cpp/archive/refs/heads/master.tar.gz"
+  tar -xzf /tmp/llama_master.tar.gz -C "$(dirname "$LLAMA_DIR")"
+  rm -rf "$LLAMA_DIR"
+  mv "$(dirname "$LLAMA_DIR")/llama.cpp-master" "$LLAMA_DIR"
+  rm -f /tmp/llama_master.tar.gz
+fi
 cd "$LLAMA_DIR"
-git fetch --depth 1 origin master
-git checkout -f FETCH_HEAD
 rm -rf build
 cmake -B build -DGGML_CUDA=ON \
   -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
