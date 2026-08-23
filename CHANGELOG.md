@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-08-23] 并发压测 + DFlash2 调研 v1.4
+
+- 新增 `scripts/bench_qwen_concurrency.py`：多线程并发压测（测单槽串行化下真实共享容量）
+- 并发实测（`-np 1` 单槽，262K 全功能档，max_tokens=200）：
+  - 聚合吞吐 **~66-68 tok/s 封顶，不随并发提升**（被单槽串行化；8/8 全成功=排队非拒绝）
+  - 每用户 tok/s = 聚合/并发：2并发34 / 4并发16.6 / 8并发8.3；TTFT 随之拉长
+  - 舒适档 **2-3 人**、可接受 **≤4 人**，更高则体感明显下降
+- 新增 `docs/DFLASH2_research.md`：DFlash2 块扩散无损推测解码调研评估。
+  结论：官方点名支持 Qwen3.8-27B，但 llama.cpp 支持为 open PR #27342 且仅 M5 Pro 实测；
+  NVIDIA 路径走 vLLM/SGLang 与 sm_120 决策冲突 → **当前 RTX5090+llama.cpp 不推荐硬上**，
+  若未来换 Apple Silicon 走 MLX 后端可吃 3-8x 无损。
+
 ## [2026-08-23] 生产压测脚本 v1.3
 
 - 新增 `scripts/bench_qwen_production.py`：统一口径测生产三大指标
