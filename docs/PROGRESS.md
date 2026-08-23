@@ -1,6 +1,6 @@
 # 项目推进进度 PROGRESS
 
-> 版本：v1.0 ｜ 2026-08-19
+> 版本：v1.1 ｜ 2026-08-23 ｜ 加生产压测脚本；服务器克隆到新实例中，压测待上线
 
 > **已归档**：`archive-20260820`（2026-08-20）——部署 + ACP 接入全链路完成，进入使用维护期
 
@@ -39,6 +39,8 @@
 - ✅ `scripts/start_llama_server.sh`：MTP + mmproj + 多 key + reasoning off
 - ✅ `deploy/qwen38.service`：systemd 自启（llama-server 版本，旧项目缺口已补）
 - ✅ `scripts/verify.sh`：health/models/chat/responses/鉴权验证
+- ✅ `scripts/bench_qwen_production.py`：生产压测（TTFT / 稳定 tok/s / 换页），
+  跨 AutoDL(Linux)+未来 Mac(Metal) 统一口径，及格线 20 tok/s 且长输入 TTFT<5s
 - ✅ 文档 6 份 + README + CHANGELOG
 - ✅ GitHub：`https://github.com/wxx591139000/qwen38-5090-deploy`（public, master）
 - ✅ llama.cpp 更新到最新 master（github.com 直连超时，本地下载 tarball 后 SFTP 上传）
@@ -53,6 +55,8 @@
 - [ ] 用户切带卡 → 启动 → `verify.sh` 端到端验证
 - [ ] 公网 URL 确认（AutoDL 自定义服务）
 - [ ] 分发给朋友：每人一把 key + base_url + model
+- [ ] **服务器克隆到新实例中（2026-08-23）**：克隆完成后 → 启动 llama-server →
+     公网 URL 更新 → 用 `scripts/bench_qwen_production.py` 跑生产压测（高并发/长上下文）
 
 ## 4. Roadmap
 

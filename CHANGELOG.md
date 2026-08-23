@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026-08-23] 生产压测脚本 v1.3
+
+- 新增 `scripts/bench_qwen_production.py`：统一口径测生产三大指标
+  （TTFT 首 token 延迟 / 稳定输出 tok/s / 换页监控），跨 Linux(AutoDL)+macOS(M 系) 对齐
+- key 读取优先级：`--key` > `QWEN38_API_KEY` > 服务器 `.api_keys` 首行
+- 及格线参考：稳定输出 ≥ 20 tok/s、长输入 TTFT < 5s、测期换页 0 增长
+- 配套交接：因此时正在**克隆到新服务器**，压测待新服务上线后跑；公网旧 URL 随克隆迁移
+
 ## [2026-08-20] 完整归档 v1.2 —— archive-20260820-v2
 
 - 新增 `docs/FRIEND_SOP.md`（朋友版使用 SOP，key 占位符不入库）
