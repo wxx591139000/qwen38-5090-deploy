@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-08-23] 压测结果归档到 docs/benchmarks/ v1.5
+
+- 压测结果从平铺 `docs/BENCHMARKS.md` 拆入专门文件夹 `docs/benchmarks/`
+  （`README.md` 索引 + `2026-08-23-single-stream.md` 单流 + `2026-08-23-concurrency.md` 并发）
+
 ## [2026-08-23] 并发压测 + DFlash2 调研 v1.4
 
 - 新增 `scripts/bench_qwen_concurrency.py`：多线程并发压测（测单槽串行化下真实共享容量）
