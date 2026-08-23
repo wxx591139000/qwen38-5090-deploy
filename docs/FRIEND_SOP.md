@@ -7,14 +7,14 @@
 
 | 项 | 值 |
 |---|---|
-| Base URL | `https://u1068217-x891-c4947d56.westd.seetacloud.com:8443/v1` |
+| Base URL | `https://u1068217-f8tl-73e1c220.weste.seetacloud.com:8443/v1` |
 | API Key | `<你的专属KEY>`（每人一把，请勿外传） |
 | Model | `qwen3.8-27b` |
 
 ## 2. 一分钟自测（curl）
 
 ```bash
-curl https://u1068217-x891-c4947d56.westd.seetacloud.com:8443/v1/chat/completions \
+curl https://u1068217-f8tl-73e1c220.weste.seetacloud.com:8443/v1/chat/completions \
   -H "Authorization: Bearer <你的专属KEY>" \
   -H "Content-Type: application/json" \
   -d '{"model":"qwen3.8-27b","messages":[{"role":"user","content":"你好，用一句话介绍你自己"}]}'
@@ -36,7 +36,7 @@ curl https://u1068217-x891-c4947d56.westd.seetacloud.com:8443/v1/chat/completion
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://u1068217-x891-c4947d56.westd.seetacloud.com:8443/v1",
+    base_url="https://u1068217-f8tl-73e1c220.weste.seetacloud.com:8443/v1",
     api_key="<你的专属KEY>",
 )
 
