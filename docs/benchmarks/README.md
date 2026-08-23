@@ -13,6 +13,7 @@
 |---|---|
 | [2026-08-23-single-stream.md](2026-08-23-single-stream.md) | 单流：短对话 + 长上下文（TTFT / 稳定 tok/s / 及格线） |
 | [2026-08-23-concurrency.md](2026-08-23-concurrency.md) | 并发：`-np 1` vs `-np 2` 全表 + 「可同时几人」结论 |
+| [DFLASH2_research.md](DFLASH2_research.md) | DFlash2 块扩散无损推测解码调研（加速技术，当前 RTX5090 不推荐、AppleSilicon/MLX 可用） |
 
 ## 一页速览
 - **单用户性能优秀**：稳定输出 **75–94 tok/s**（短/长），TTFT p50 **0.14–0.30s**，远超标。
